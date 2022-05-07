@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "RNsBPJnV67iMZ5+EXDYYi6GeBTWCDWiAJMH4zvMKEI5TKZbywq9fHHWPOl0727C584f0l7OpdWns/aCdruzZNQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Bill\\source\\repos\\ScrapeWeb\\ScrapeWeb\\ScrapeWeb.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Bill\\.nuget\\packages\\htmlagilitypack\\1.11.42\\htmlagilitypack.1.11.42.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,15 @@
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.exe
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.csprojAssemblyReference.cache
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.AssemblyInfoInputs.cache
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.AssemblyInfo.cs
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.deps.json
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.runtimeconfig.json
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.runtimeconfig.dev.json
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.dll
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\ScrapeWeb.pdb
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\bin\Debug\netcoreapp3.1\HtmlAgilityPack.dll
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.csproj.CoreCompileInputs.cache
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.csproj.CopyComplete
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.dll
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.pdb
+C:\Users\Bill\source\repos\ScrapeWeb\ScrapeWeb\obj\Debug\netcoreapp3.1\ScrapeWeb.genruntimeconfig.cache
