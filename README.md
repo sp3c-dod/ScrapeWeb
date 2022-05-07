@@ -1,0 +1,2 @@
+# Scrape Web
+I found a website that had several game server files hosted on it. Five of them were Day of Defeat 1.3 servers and I wanted the map files on those servers, so I wrote this program to scrape the website and download the files to my machine. It is specifically coded to work against http://89.40.216.145/ (no guarantee this site will be up as of the time you are reading this), but this code can be used as a template for downloading files from similar websites that simply list a folder structure and files.
