@@ -10,39 +10,42 @@ namespace ScrapeWeb
     {
         public static void Main(string[] args)
         {
-            Uri uri = new Uri("http://89.40.216.145/198.144.183.130_27016/");
-            const string downloadPath = @"C:\server download\198.144.183.130_27016\";
+            var serversToDownload = new List<ServerDownloadInformation>()
+            {
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/198.144.183.130_27016/"), DownloadPath = @"C:\server download\198.144.183.130_27016\", SimulateOnly = true, SimulationOutputPath = "198.144.183.130_27016 simulation.txt" },
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true, SimulationOutputPath = "72.251.228.169_27016 simulation.txt" },
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.33_27017/"), DownloadPath = @"C:\server download\186.233.187.33_27017\", SimulateOnly = true, SimulationOutputPath = "186.233.187.33_27017 simulation.txt" },
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.19_27017/"), DownloadPath = @"C:\server download\186.233.187.19_27017\", SimulateOnly = true, SimulationOutputPath = "186.233.187.19_27017 simulation.txt" },
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, SimulationOutputPath = "186.233.186.51_27017 simulation.txt" }
+            };
 
-            Uri uri1 = new Uri("http://89.40.216.145/72.251.228.169_27016/");
-            const string downloadPath1 = @"C:\server download\72.251.228.169_27016\";
+            foreach (var serverToDownload in serversToDownload)
+            {
+                Console.WriteLine("Downloading: " + serverToDownload.ServerUri.ToString());
 
-            Uri uri2 = new Uri("http://89.40.216.145/186.233.187.33_27017/");
-            const string downloadPath2 = @"C:\server download\186.233.187.33_27017\";
+                if (serverToDownload.SimulateOnly)
+                {
+                    List<string> simulationDownloadList = new List<string>();
+                    DownloadAllLinks(serverToDownload.ServerUri, serverToDownload.DownloadPath, simulationDownloadList);
 
-            Uri uri3 = new Uri("http://89.40.216.145/186.233.187.19_27017/");
-            const string downloadPath3 = @"C:\server download\186.233.187.19_27017\";
-
-            Uri uri4 = new Uri("http://89.40.216.145/186.233.186.51_27017");
-            const string downloadPath4 = @"C:\server download\186.233.186.51_27017\";
-
-            Console.WriteLine(uri.ToString());
-            DownloadAllLinks(uri, downloadPath);
-            Console.WriteLine(uri1.ToString());
-            DownloadAllLinks(uri1, downloadPath1);
-            Console.WriteLine(uri2.ToString());
-            DownloadAllLinks(uri2, downloadPath2);
-            Console.WriteLine(uri3.ToString());
-            DownloadAllLinks(uri3, downloadPath3);
-            Console.WriteLine(uri4.ToString());
-            DownloadAllLinks(uri4, downloadPath4);
+                    File.WriteAllLines(serverToDownload.SimulationOutputPath, simulationDownloadList.ToArray());
+                }
+                else
+                {
+                    DownloadAllLinks(serverToDownload.ServerUri, serverToDownload.DownloadPath);
+                }
+            }
         }
 
+        //TODO: links to skip
+        //TODO: tokens for folders
+        //TODO: file mask tokens
         /// <summary>
         /// Download all links on directory listing style website.
         /// </summary>
         /// <param name="url">Starting URL</param>
         /// <param name="downloadPath">Path to store the files locally</param>
-        private static void DownloadAllLinks(Uri url, string downloadPath)
+        private static void DownloadAllLinks(Uri url, string downloadPath, List<string> simulationDownloadList = null)
         {
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(url);
@@ -51,7 +54,7 @@ namespace ScrapeWeb
             IEnumerable<HtmlNode> anchors = doc.DocumentNode.Descendants("a");
 
             // Create folder if it doesn't exist
-            if (!Directory.Exists(downloadPath))
+            if (!Directory.Exists(downloadPath) && simulationDownloadList == null)
             {
                 Directory.CreateDirectory(downloadPath);
             }
@@ -81,7 +84,7 @@ namespace ScrapeWeb
                 {
                     // Rescurse sub-folder
                     Uri subFolder = new Uri(url, anchorInnerText);
-                    DownloadAllLinks(subFolder, Path.Combine(downloadPath + anchorInnerText.Replace(@"/", @"\")));
+                    DownloadAllLinks(subFolder, Path.Combine(downloadPath + anchorInnerText.Replace(@"/", @"\")), simulationDownloadList);
                 }
                 else
                 {
@@ -89,7 +92,14 @@ namespace ScrapeWeb
                     try
                     {
                         Uri downloadLink = new Uri(url, anchorInnerText);
-                        Client.DownloadFile(downloadLink, Path.Combine(downloadPath, anchorInnerText));
+                        if (simulationDownloadList == null)
+                        {
+                            Client.DownloadFile(downloadLink, Path.Combine(downloadPath, anchorInnerText));
+                        }
+                        else
+                        {
+                            simulationDownloadList.Add(Path.Combine(downloadPath, anchorInnerText));
+                        }                        
                     }
                     catch (Exception ex)
                     {
