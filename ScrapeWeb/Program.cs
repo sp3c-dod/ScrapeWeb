@@ -21,10 +21,9 @@ namespace ScrapeWeb
 
             foreach (var serverToDownload in serversToDownload)
             {
-                Console.WriteLine("Downloading: " + serverToDownload.ServerUri.ToString());
-
                 if (serverToDownload.SimulateOnly)
                 {
+                    Console.WriteLine("Simulating downloading: " + serverToDownload.ServerUri.ToString());
                     List<string> simulationDownloadList = new List<string>();
                     DownloadAllLinks(serverToDownload.ServerUri, serverToDownload.DownloadPath, simulationDownloadList);
 
@@ -32,6 +31,7 @@ namespace ScrapeWeb
                 }
                 else
                 {
+                    Console.WriteLine("Downloading: " + serverToDownload.ServerUri.ToString());
                     DownloadAllLinks(serverToDownload.ServerUri, serverToDownload.DownloadPath);
                 }
             }
