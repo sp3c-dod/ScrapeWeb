@@ -10,21 +10,22 @@ namespace ScrapeWeb
     public class WebDownloader
     {
         /// <summary>
-        /// 
+        /// Always download all files on a website while recursively entering links that are determined
+        /// to be related sub-folders
         /// </summary>
-        /// <param name="serverDownloadInformation"></param>
+        /// <param name="serverDownloadInformation">Information about the website whose files will be downloaded</param>
         public WebDownloader(ServerDownloadInformation serverDownloadInformation)
         {
             _serverDownloadInformation = serverDownloadInformation;
         }
 
-        private  ServerDownloadInformation _serverDownloadInformation { get; set; }
+        private ServerDownloadInformation _serverDownloadInformation { get; set; }
         private List<string> _downloadList = new List<string>();
 
         /// <summary>
-        /// 
+        /// Downloads all files including those in sub-folders for a given website
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A list of URIs to the files that were downloaded</returns>
         public List<string> DownloadAll()
         {
             if (_serverDownloadInformation.ServerUri == null)
@@ -42,20 +43,17 @@ namespace ScrapeWeb
             return _downloadList;
         }
 
-        //TODO: links to skip
-        //TODO: tokens for folders
-        //TODO: file mask tokens
         /// <summary>
-        /// Download all links on directory listing style website.
+        /// Download all links on a directory listing style website.
+        /// Sub-folders will be mirrored to the local download path.
         /// </summary>
-        /// <param name="url">Starting URL</param>
+        /// <param name="url">URL containing the files and folders to download</param>
         /// <param name="downloadPath">Path to store the files locally</param>
         /// <returns></returns>
         private void DownloadAllLinks(Uri url, string downloadPath)
         {
-            //TODO: need downloadListBuilder outside of recursion
             HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(url);  //TODO: Why is it loading the wrong thing?
+            HtmlDocument doc = web.Load(url);
 
             // Get all the anchors (a elements) on the current page
             IEnumerable<HtmlNode> anchors = doc.DocumentNode.Descendants("a");
@@ -68,6 +66,7 @@ namespace ScrapeWeb
 
             foreach (HtmlNode anchor in anchors)
             {
+                // Get the HREF attribute and the InnerText of the anchor element
                 string anchorHref;
                 string anchorInnerText = anchor.InnerText;
                 try
@@ -90,8 +89,8 @@ namespace ScrapeWeb
                     continue;
                 }
 
-                //TODO: Check directory tokens
-                if (anchorHref.Contains("/"))
+                // Download files in this folder and recurse into sub-folders
+                if (CompareAllTokens(anchorHref, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
                 {
                     // Rescurse sub-folder
                     Uri subFolder = new Uri(url, anchorHref);
@@ -115,6 +114,9 @@ namespace ScrapeWeb
                     {
                         Console.WriteLine("Error downloading: " + url + anchorHref);
                         Console.WriteLine("    Error Message: " + ex.Message);
+                        // Continue downloading the remaining files, so that if there are just a few errors
+                        // those files can be manually downloaded.  If there is a large number of errors
+                        // the local folder can be deleted and the process retried after the error is resolved.
                     }
                 }
             }
@@ -123,7 +125,7 @@ namespace ScrapeWeb
         private HtmlAttribute GetHrefAttribute(HtmlAttributeCollection attributes)
         {
             HtmlAttribute hrefAttribute = null;
-            foreach(var attribute in attributes)
+            foreach (var attribute in attributes)
             {
                 if (attribute.Name == "href")
                 {
@@ -136,11 +138,11 @@ namespace ScrapeWeb
         }
 
         /// <summary>
-        /// 
+        /// Compare all of the tokens in a given token collection
         /// </summary>
-        /// <param name="toMatch"></param>
-        /// <param name="tokens"></param>
-        /// <returns></returns>
+        /// <param name="toMatch">The term to match the token against</param>
+        /// <param name="tokens">The tokens to run against the term</param>
+        /// <returns>Whether or not any of the tokens match against the given term</returns>
         private bool CompareAllTokens(string anchorHref, string anchorInnerText, List<Token> tokens)
         {
             bool matchFound = false;
@@ -164,15 +166,15 @@ namespace ScrapeWeb
         }
 
         /// <summary>
-        /// 
+        /// Compare the given term agains the given token
         /// </summary>
-        /// <param name="toMatch"></param>
-        /// <param name="token"></param>
+        /// <param name="toMatch">The term to compare against the given token</param>
+        /// <param name="token">The token to compare against the given term</param>
         /// <remarks>
         /// Yes, I realize all of the token types can be done with regular expressions.
         /// The others were thrown in for ease of use.
         /// </remarks>
-        /// <returns></returns>
+        /// <returns>Whether or not the token matches against the given term</returns>
         private bool MatchToken(string toMatch, Token token)
         {
             bool matched;
