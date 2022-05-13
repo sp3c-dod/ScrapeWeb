@@ -120,7 +120,8 @@ namespace ScrapeWeb
                     WebClient Client = new WebClient();
                     try
                     {
-                        Uri downloadLink = new Uri(url, anchorHref);
+                        string relativeFileName = anchorHref.Contains("/") ? anchorHref.Remove(0, anchorHref.LastIndexOf("/") + 1) : anchorHref;
+                        Uri downloadLink = new Uri(url, relativeFileName);
                         var downloadFilePath = Path.Combine(downloadPath, decodedFilename);
 
                         if (!_serverDownloadInformation.SimulateOnly)
