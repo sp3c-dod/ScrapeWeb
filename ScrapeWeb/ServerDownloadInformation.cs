@@ -34,8 +34,8 @@ namespace ScrapeWeb
         public bool SimulateOnly { get; set; }
 
         /// <summary>
-        /// Local output path for the results of a simulation. This is an optional feature of the simulation
+        /// Local output path for the list of files downloaded. This is optional.
         /// </summary>
-        public string SimulationOutputPath { get; set; }
+        public string DownloadListOutputPath { get; set; }
     }
 }

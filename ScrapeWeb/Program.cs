@@ -16,14 +16,24 @@ namespace ScrapeWeb
         /// web page, or download. You might have to look for other information in the source of the web page
         /// to find another way to determine what is a folder vs a file.
         /// </remarks>
-        private const string MatchForwardSlashButNoDotsRegEx = @"/^(?!.*\.).*\/.*$/";
+        private const string MatchForwardSlashButNoDotsRegEx = @"^(?!.*\.).*\/.*$";
 
         public static void Main(string[] args)
         {
             List<Token> globalIgnoreTokens = new List<Token>()
             {
                 new Token(TokenType.Equals, "Thumbs.db"),
-                new Token(TokenType.StartsWith, "../")
+                new Token(TokenType.StartsWith, "../"),
+                new Token(TokenType.Contains, " - Copy"),
+                new Token(TokenType.Contains, "Copy of "),
+                new Token(TokenType.EndsWith, ".inf"),
+                new Token(TokenType.EndsWith, ".gam"),
+                new Token(TokenType.EndsWith, ".vdf"),
+                new Token(TokenType.EndsWith, ".ini"),
+                new Token(TokenType.EndsWith, ".bat"),
+                new Token(TokenType.EndsWith, ".css"),
+                new Token(TokenType.EndsWith, ".js"),
+                new Token(TokenType.EndsWith, ".stats")
             };
 
             Token defaultDirectoryRegEx = new Token(TokenType.RegEx, MatchForwardSlashButNoDotsRegEx);
@@ -37,15 +47,14 @@ namespace ScrapeWeb
                     IgnoreTokens = new List<Token>()
                     {
                         new Token(TokenType.StartsWith, "?"),
-                        new Token(TokenType.EndsWith, ".css"),
                         new Token(TokenType.Equals, "Parent Directory", CompareLocation.InnerText),
                         new Token(TokenType.Equals, "addons", CompareLocation.InnerText)
                     },
                     SimulateOnly = true,
-                    SimulationOutputPath = "wrathofk007.com simulation.txt"
+                    DownloadListOutputPath = @"c:\temp\wrathofk007.com simulation.txt"
                 },
                 //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/198.144.183.130_27016/"), DownloadPath = @"C:\server download\198.144.183.130_27016\", SimulateOnly = true },
-                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true },
+                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\72.251.228.169_27016 simulation.txt" },
                 //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.33_27017/"), DownloadPath = @"C:\server download\186.233.187.33_27017\", SimulateOnly = true },
                 //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.19_27017/"), DownloadPath = @"C:\server download\186.233.187.19_27017\", SimulateOnly = true, },
                 //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, }
@@ -73,14 +82,20 @@ namespace ScrapeWeb
                     Console.Write("Simulating ");
                 }
 
-                Console.WriteLine("Downloading: " + serverToDownload.ServerUri.ToString());
+                Console.WriteLine("Downloading files from: " + serverToDownload.ServerUri.ToString());
                 List<string> downloadList = webDownloader.DownloadAll();
 
-                downloadList.ForEach(d => Console.WriteLine(d));
-                if (Directory.Exists(serverToDownload.SimulationOutputPath))
+                //Enable to output all files downloaded to console:
+                //downloadList.ForEach(d => Console.WriteLine(d));
+
+                if (Directory.Exists(Path.GetDirectoryName(serverToDownload.DownloadListOutputPath)))
                 {
-                    File.WriteAllLines(serverToDownload.SimulationOutputPath, downloadList.ToArray());
+                    File.WriteAllLines(serverToDownload.DownloadListOutputPath, downloadList.ToArray());
                 }
+
+                // Space out the output between servers we are downloading from
+                Console.WriteLine();
+                Console.WriteLine();
             }
         }
     }

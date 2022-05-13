@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Web;
+using System.Linq;
 
 namespace ScrapeWeb
 {
@@ -58,6 +60,9 @@ namespace ScrapeWeb
             // Get all the anchors (a elements) on the current page
             IEnumerable<HtmlNode> anchors = doc.DocumentNode.Descendants("a");
 
+            //Enable to output of folders traversed to console:
+            //Console.WriteLine("Download path set to: " + downloadPath);
+
             // Create folder if it doesn't exist
             if (!Directory.Exists(downloadPath) && !_serverDownloadInformation.SimulateOnly)
             {
@@ -82,19 +87,33 @@ namespace ScrapeWeb
                     throw missingHrefException;
                 }
 
+                string decodedFilename = HttpUtility.UrlDecode(anchorHref);
+
                 // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"
                 // as well as file types that you don't want to download (e.g. Thumbs.db, *.txt, etc...)
-                if (CompareAllTokens(anchorHref, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
+                if (CompareAllTokens(decodedFilename, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
                 {
                     continue;
                 }
-
+                
                 // Download files in this folder and recurse into sub-folders
-                if (CompareAllTokens(anchorHref, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
+                if (CompareAllTokens(decodedFilename, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
                 {
                     // Rescurse sub-folder
                     Uri subFolder = new Uri(url, anchorHref);
-                    DownloadAllLinks(subFolder, Path.Combine(downloadPath + anchorHref.Replace(@"/", @"\")));
+
+                    //TODO: this only works if the folder has a trailing /.  Change to work if the trailing / is missing.
+                    string downloadSubFolderName;
+                    if (decodedFilename.Count(s => s == '/') > 1)
+                    {
+                        downloadSubFolderName = decodedFilename.Substring(decodedFilename.Substring(0, decodedFilename.LastIndexOf("/")).LastIndexOf("/") + 1);
+                    }
+                    else
+                    {
+                        downloadSubFolderName = decodedFilename;
+                    }
+
+                    DownloadAllLinks(subFolder, Path.Combine(downloadPath + downloadSubFolderName.Replace(@"/", @"\")));
                 }
                 else
                 {
@@ -102,12 +121,14 @@ namespace ScrapeWeb
                     try
                     {
                         Uri downloadLink = new Uri(url, anchorHref);
+                        var downloadFilePath = Path.Combine(downloadPath, decodedFilename);
+
                         if (!_serverDownloadInformation.SimulateOnly)
                         {
-                            Client.DownloadFile(downloadLink, Path.Combine(downloadPath, anchorHref));
+                            Client.DownloadFile(downloadLink, downloadFilePath);
                         }
 
-                        _downloadList.Add(Path.Combine(downloadPath, anchorHref));
+                        _downloadList.Add(downloadFilePath);
 
                     }
                     catch (Exception ex)
@@ -182,7 +203,8 @@ namespace ScrapeWeb
             switch (token.Type)
             {
                 case TokenType.RegEx:
-                    //https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=net-6.0
+                    //Syntax: https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=net-6.0
+                    //Tester: http://regexstorm.net/tester
                     Regex regEx = new Regex(token.Pattern);
                     matched = regEx.Match(toMatch).Success;
                     break;
