@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Web;
 using System.Linq;
 
@@ -76,7 +75,7 @@ namespace ScrapeWeb
                 string anchorInnerText = anchor.InnerText;
                 try
                 {
-                    anchorHref = GetHrefAttribute(anchor.Attributes).Value;
+                    anchorHref = WebUtility.GetHrefAttribute(anchor.Attributes).Value;
                 }
                 catch (Exception ex)
                 {
@@ -145,21 +144,6 @@ namespace ScrapeWeb
             }
         }
 
-        private HtmlAttribute GetHrefAttribute(HtmlAttributeCollection attributes)
-        {
-            HtmlAttribute hrefAttribute = null;
-            foreach (var attribute in attributes)
-            {
-                if (attribute.Name == "href")
-                {
-                    hrefAttribute = attribute;
-                    break;
-                }
-            }
-
-            return hrefAttribute;
-        }
-
         /// <summary>
         /// Compare all of the tokens in a given token collection
         /// </summary>
@@ -174,11 +158,11 @@ namespace ScrapeWeb
             {
                 if (token.CompareLocation == CompareLocation.HrefAttribute)
                 {
-                    matchFound = MatchToken(anchorHref, token);
+                    matchFound = token.MatchToken(anchorHref);
                 }
                 else if (token.CompareLocation == CompareLocation.InnerText)
                 {
-                    matchFound = MatchToken(anchorInnerText, token);
+                    matchFound = token.MatchToken(anchorInnerText);
                 }
 
                 // Short circut as soon as a match is found
@@ -186,48 +170,6 @@ namespace ScrapeWeb
             }
 
             return matchFound;
-        }
-
-        /// <summary>
-        /// Compare the given term agains the given token
-        /// </summary>
-        /// <param name="toMatch">The term to compare against the given token</param>
-        /// <param name="token">The token to compare against the given term</param>
-        /// <remarks>
-        /// Yes, I realize all of the token types can be done with regular expressions.
-        /// The others were thrown in for ease of use.
-        /// </remarks>
-        /// <returns>Whether or not the token matches against the given term</returns>
-        private bool MatchToken(string toMatch, Token token)
-        {
-            bool matched;
-
-            switch (token.Type)
-            {
-                case TokenType.RegEx:
-                    //Syntax: https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=net-6.0
-                    //Tester: http://regexstorm.net/tester
-                    Regex regEx = new Regex(token.Pattern);
-                    matched = regEx.Match(toMatch).Success;
-                    break;
-                case TokenType.Contains:
-                    matched = toMatch.Contains(token.Pattern);
-                    break;
-                case TokenType.Equals:
-                    matched = toMatch.Equals(token.Pattern);
-                    break;
-                case TokenType.StartsWith:
-                    matched = toMatch.StartsWith(token.Pattern);
-                    break;
-                case TokenType.EndsWith:
-                    matched = toMatch.EndsWith(token.Pattern);
-                    break;
-                default:
-                    matched = false;
-                    break;
-            }
-
-            return matched;
         }
     }
 }
