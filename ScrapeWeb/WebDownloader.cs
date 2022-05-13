@@ -87,30 +87,30 @@ namespace ScrapeWeb
                     throw missingHrefException;
                 }
 
-                string decodedFilename = HttpUtility.UrlDecode(anchorHref);
+                string decodedAnchorHref = HttpUtility.UrlDecode(anchorHref);
 
                 // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"
                 // as well as file types that you don't want to download (e.g. Thumbs.db, *.txt, etc...)
-                if (CompareAllTokens(decodedFilename, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
                 {
                     continue;
                 }
                 
                 // Download files in this folder and recurse into sub-folders
-                if (CompareAllTokens(decodedFilename, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
                 {
                     // Rescurse sub-folder
                     Uri subFolder = new Uri(url, anchorHref);
 
                     //TODO: this only works if the folder has a trailing /.  Change to work if the trailing / is missing.
                     string downloadSubFolderName;
-                    if (decodedFilename.Count(s => s == '/') > 1)
+                    if (decodedAnchorHref.Count(s => s == '/') > 1)
                     {
-                        downloadSubFolderName = decodedFilename.Substring(decodedFilename.Substring(0, decodedFilename.LastIndexOf("/")).LastIndexOf("/") + 1);
+                        downloadSubFolderName = decodedAnchorHref.Substring(decodedAnchorHref.Substring(0, decodedAnchorHref.LastIndexOf("/")).LastIndexOf("/") + 1);
                     }
                     else
                     {
-                        downloadSubFolderName = decodedFilename;
+                        downloadSubFolderName = decodedAnchorHref;
                     }
 
                     DownloadAllLinks(subFolder, Path.Combine(downloadPath + downloadSubFolderName.Replace(@"/", @"\")));
@@ -122,6 +122,7 @@ namespace ScrapeWeb
                     {
                         string relativeFileName = anchorHref.Contains("/") ? anchorHref.Remove(0, anchorHref.LastIndexOf("/") + 1) : anchorHref;
                         Uri downloadLink = new Uri(url, relativeFileName);
+                        string decodedFilename = HttpUtility.UrlDecode(relativeFileName);
                         var downloadFilePath = Path.Combine(downloadPath, decodedFilename);
 
                         if (!_serverDownloadInformation.SimulateOnly)
