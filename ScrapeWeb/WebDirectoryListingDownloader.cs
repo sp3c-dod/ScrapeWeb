@@ -26,6 +26,11 @@ namespace ScrapeWeb
         /// <returns></returns>
         protected override void DownloadAllLinks(Uri url, string downloadPath)
         {
+            if (!url.ToString().EndsWith("/"))
+            {
+                throw new ArgumentException("Directory Listing URLs must end in a /");
+            }
+
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(url);
 
@@ -43,22 +48,15 @@ namespace ScrapeWeb
 
             foreach (HtmlNode anchor in anchors)
             {
-                // Get the HREF attribute and the InnerText of the anchor element
-                string anchorHref;
                 string anchorInnerText = anchor.InnerText;
-                try
-                {
-                    anchorHref = WebUtility.GetHrefAttribute(anchor.Attributes).Value;
-                }
-                catch (Exception ex)
-                {
-                    Exception missingHrefException = new Exception("Could not determine the href attribute of the anchor tag", ex);
-                    missingHrefException.Data.Add("InnerHtml", anchor.InnerHtml);
-                    missingHrefException.Data.Add("OuterHtml", anchor.OuterHtml);
-                    missingHrefException.Data.Add("Url", url.ToString());
-                    throw missingHrefException;
-                }
 
+                // If the anchor tag has no HREF attribute then skip that anchor tag
+                HtmlAttribute hrefAttribute = WebUtility.GetHrefAttribute(anchor.Attributes);
+                if (hrefAttribute == null)
+                {
+                    continue;
+                }
+                string anchorHref = hrefAttribute.Value;
                 string decodedAnchorHref = HttpUtility.UrlDecode(anchorHref);
 
                 // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"

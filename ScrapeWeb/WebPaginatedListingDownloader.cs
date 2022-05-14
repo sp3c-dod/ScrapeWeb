@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Web;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace ScrapeWeb
 {
@@ -14,30 +12,29 @@ namespace ScrapeWeb
     /// </summary>
     public class WebPaginatedListingDownloader : WebDownloader
     {
-        /// <summary>
-        /// Determines what kind of link is used to the pages of download files
-        /// </summary>
-        Token _pageToken;
-
-        /// <summary>
-        /// Optional transform on the download link such replacing .html with .zip
-        /// </summary>
-        Regex _downloadLinkTransform;
+        private PaginatedListingSiteInformation _paginatedListingSiteInformation { get; set; }
 
         /// <summary>
         /// Always download all files on a website
         /// </summary>
-        /// <param name="pageToken"></param>
-        /// <param name="downloadLinkTransform"></param>
+        /// <param name="pageMask">URL that represents a page of files. Use {0} in place of where the page number appears.</param>
+        /// <param name="pageStart">Start page to start downloading files</param>
+        /// <param name="pageEnd">End page to start downloading files</param>
+        /// <param name="downloadLinkTransform">Optional RegEx to transform the filename to be downloaded (e.g. .html to .zip)</param>
         /// <param name="serverDownloadInformation">Information about the website whose files will be downloaded</param>
-        public WebPaginatedListingDownloader(ServerDownloadInformation serverDownloadInformation, Token pageToken, Regex downloadLinkTransform) : base(serverDownloadInformation)
+        public WebPaginatedListingDownloader(PaginatedListingSiteInformation serverDownloadInformation) : base(serverDownloadInformation)
         {
-            if (pageToken == null)
+            if (String.IsNullOrWhiteSpace(serverDownloadInformation.PageMask))
             {
-                throw new ArgumentException("Page Token is required.");
+                throw new ArgumentException("Page Mask is required.");
             }
 
-            _pageToken = pageToken;
+            if (serverDownloadInformation.PageStart > serverDownloadInformation.PageEnd)
+            {
+                throw new ArgumentOutOfRangeException("Page Start cannot be greater than Page End");
+            }
+
+            _paginatedListingSiteInformation = serverDownloadInformation;
         }
 
         /// <summary>
@@ -48,84 +45,82 @@ namespace ScrapeWeb
         /// <returns></returns>
         protected override void DownloadAllLinks(Uri url, string downloadPath)
         {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(url);
-
             // Create folder if it doesn't exist
             if (!Directory.Exists(downloadPath) && !_serverDownloadInformation.SimulateOnly)
             {
                 Directory.CreateDirectory(downloadPath);
             }
 
+            for (int pageNumber = _paginatedListingSiteInformation.PageStart; pageNumber <= _paginatedListingSiteInformation.PageEnd; pageNumber++)
+            {
+                Console.WriteLine("Downloading page {0}...", pageNumber);
+                DownloadFilesOnPage(String.Format(_paginatedListingSiteInformation.PageMask, pageNumber), downloadPath);
+            }
+        }
+
+        private void DownloadFilesOnPage(string pageUrl, string downloadPath)
+        {
+            HtmlWeb web = new HtmlWeb();
+            Uri url = new Uri(pageUrl);
+            HtmlDocument doc = web.Load(url);
+
             // Get all the anchors (a elements) on the current page
             IEnumerable<HtmlNode> anchors = doc.DocumentNode.Descendants("a");
-            List<Uri> pageUris = new List<Uri>();
-            List<Uri> downloadUris = new List<Uri>();
 
-            //TODO: what if there a ellipses. find a way to iterate to last page
-            // Gather all page links 
-            foreach (var anchor in anchors)
+            foreach(var anchor in anchors)
             {
+                string anchorInnerText = anchor.InnerText;
+
+                // If the anchor tag has no HREF attribute then skip that anchor tag
+                HtmlAttribute hrefAttribute = WebUtility.GetHrefAttribute(anchor.Attributes);
+                if (hrefAttribute == null)
+                {
+                    continue;
+                }
+                string anchorHref = hrefAttribute.Value;
+                string decodedAnchorHref = HttpUtility.UrlDecode(anchorHref);
+
+                // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"
+                // as well as file types that you don't want to download (e.g. Thumbs.db, *.txt, etc...)
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
+                {
+                    continue;
+                }
+
+                WebClient Client = new WebClient();
                 try
                 {
-                    string anchorHref = WebUtility.GetHrefAttribute(anchor.Attributes).Value;
-                    if (_pageToken.Match(anchorHref))
+                    //TODO: download links might not be base URL + relative filename.  Might need to rework this
+                    string relativeFileName = anchorHref.Contains("/") ? anchorHref.Remove(0, anchorHref.LastIndexOf("/") + 1) : anchorHref;
+
+                    // Optionally transform the filename (e.g. from .html to .zip)
+                    if (_paginatedListingSiteInformation.DownloadLinkTransform != null)
                     {
-                        //TODO: what if a relative URL vs an aboslute URL. Account for both here
-                        pageUris.Add(new Uri(anchorHref));
+                        relativeFileName = _paginatedListingSiteInformation.DownloadLinkTransform.Replace(relativeFileName);
                     }
+
+                    Uri downloadLink = new Uri(url, relativeFileName);
+                    string decodedFilename = HttpUtility.UrlDecode(relativeFileName);
+                    var downloadFilePath = Path.Combine(downloadPath, decodedFilename);
+
+                    if (!_serverDownloadInformation.SimulateOnly)
+                    {
+                        Client.DownloadFile(downloadLink, downloadFilePath);
+                    }
+
+                    _downloadList.Add(downloadFilePath);
+
                 }
                 catch (Exception ex)
                 {
-                    Exception missingHrefException = new Exception("Could not determine the href attribute of the anchor tag", ex);
-                    missingHrefException.Data.Add("InnerHtml", anchor.InnerHtml);
-                    missingHrefException.Data.Add("OuterHtml", anchor.OuterHtml);
-                    missingHrefException.Data.Add("Url", url.ToString());
-                    throw missingHrefException;
+                    Console.WriteLine("Error downloading: " + pageUrl + anchorHref);
+                    Console.WriteLine("    Error Message: " + ex.Message);
+                    // Continue downloading the remaining files, so that if there are just a few errors
+                    // those files can be manually downloaded.  If there is a large number of errors
+                    // the local folder can be deleted and the process retried after the error is resolved.
                 }
-            }
-
-            //TODO: start on current page (add to collection) and the iterate for each page
-            //TODO: append page links to the ignore lists before downloading
-
-            //if (CompareAllTokens(anchorHref, anchor.InnerText, _serverDownloadInformation.IgnoreTokens))
-            //{
-            //    //TODO: what if a relative URL vs an aboslute URL. Account for both here
-            //    downloadUris.Add(new Uri(anchorHref));
-            //}
-
-
-            //TODO: Do an optional transform on the download link before starting download
-            if (_downloadLinkTransform != null)
-            {
 
             }
-
-            //TODO: Download files
-            //WebClient Client = new WebClient();
-            //try
-            //{
-            //    string relativeFileName = anchorHref.Contains("/") ? anchorHref.Remove(0, anchorHref.LastIndexOf("/") + 1) : anchorHref;
-            //    Uri downloadLink = new Uri(url, relativeFileName);
-            //    string decodedFilename = HttpUtility.UrlDecode(relativeFileName);
-            //    var downloadFilePath = Path.Combine(downloadPath, decodedFilename);
-
-            //    if (!_serverDownloadInformation.SimulateOnly)
-            //    {
-            //        Client.DownloadFile(downloadLink, downloadFilePath);
-            //    }
-
-            //    _downloadList.Add(downloadFilePath);
-
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("Error downloading: " + url + anchorHref);
-            //    Console.WriteLine("    Error Message: " + ex.Message);
-            //    // Continue downloading the remaining files, so that if there are just a few errors
-            //    // those files can be manually downloaded.  If there is a large number of errors
-            //    // the local folder can be deleted and the process retried after the error is resolved.
-            //}
         }
     }
 }

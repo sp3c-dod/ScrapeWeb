@@ -38,64 +38,95 @@ namespace ScrapeWeb
 
             Token defaultDirectoryRegEx = new Token(TokenType.RegEx, MatchForwardSlashButNoDotsRegEx);
 
-            var serversToDownload = new List<ServerDownloadInformation>()
+            var directoryServersToDownload = new List<ServerDownloadInformation>()
             {
-                new ServerDownloadInformation()
-                {
-                    ServerUri = new Uri("http://wrathofk007.com/hldswokrold/dod/"),
-                    DownloadPath = @"C:\server download\wrathofk007.com\",
-                    IgnoreTokens = new List<Token>()
-                    {
-                        new Token(TokenType.StartsWith, "?"),
-                        new Token(TokenType.Equals, "Parent Directory", CompareLocation.InnerText),
-                        new Token(TokenType.Equals, "addons", CompareLocation.InnerText)
-                    },
-                    SimulateOnly = true
-                },
-                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/198.144.183.130_27016/"), DownloadPath = @"C:\server download\198.144.183.130_27016\", SimulateOnly = true },
+                //new ServerDownloadInformation()
+                //{
+                //    ServerUri = new Uri("http://wrathofk007.com/hldswokrold/dod/"),
+                //    DownloadPath = @"C:\server download\wrathofk007.com\",
+                //    IgnoreTokens = new List<Token>()
+                //    {
+                //        new Token(TokenType.StartsWith, "?"),
+                //        new Token(TokenType.Equals, "Parent Directory", CompareLocation.InnerText),
+                //        new Token(TokenType.Equals, "addons", CompareLocation.InnerText)
+                //    },
+                //    SimulateOnly = true,
+                //    DownloadListOutputPath = @"c:\temp\wrathofk007.com downloads.txt"
+                //},
+                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/198.144.183.130_27016/"), DownloadPath = @"C:\server download\198.144.183.130_27016\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\198.144.183.130_27016 downloads.txt" },
                 //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\72.251.228.169_27016 downloads.txt" },
-                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.33_27017/"), DownloadPath = @"C:\server download\186.233.187.33_27017\", SimulateOnly = true },
-                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.19_27017/"), DownloadPath = @"C:\server download\186.233.187.19_27017\", SimulateOnly = true, },
-                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, }
+                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.33_27017/"), DownloadPath = @"C:\server download\186.233.187.33_27017\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\186.233.187.33_27017 downloads.txt" },
+                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.19_27017/"), DownloadPath = @"C:\server download\186.233.187.19_27017\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\186.233.187.19_27017 downloads.txt" },
+                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017/"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\186.233.186.51_27017 downloads.txt" }
             };
 
-            foreach (var serverToDownload in serversToDownload)
+            var paginatedListingSitesToDownload = new List<PaginatedListingSiteInformation>()
             {
-                // Add global ignores to the server information
-                if (serverToDownload.IgnoreTokens == null)
+                new PaginatedListingSiteInformation()
                 {
-                    serverToDownload.IgnoreTokens = new List<Token>();
-                }
-                serverToDownload.IgnoreTokens.AddRange(globalIgnoreTokens);
+                    ServerUri = new Uri("https://en.ds-servers.com/maps/goldsrc/dod/"),
+                    DownloadPath = @"C:\server download\ds-servers\",
+                    IgnoreTokens = new List<Token>()
+                    {
+                        // URL does not contain /maps/goldsrc/dod/*.html
+                        new Token(TokenType.RegEx, @"(?<!\/maps\/goldsrc\/dod\/.*\.html)$")
+                    },
+                    SimulateOnly = false,
+                    DownloadListOutputPath = @"c:\temp\ds-servers downloads.txt",
+                    PageMask = @"https://en.ds-servers.com/maps/goldsrc/dod/{0}/",
+                    PageStart = 0,
+                    PageEnd = 13,
+                    DownloadLinkTransform = new TermReplacer(".html", ".zip")
+                },
+            };
 
-                // An empty list will still be honored and not overwritten otherwise use the default directory finding regex
-                if (serverToDownload.DirectoryTokens == null)
-                {
-                    serverToDownload.DirectoryTokens = new List<Token>() { defaultDirectoryRegEx };
-                }
-
-                WebDirectoryListingDownloader dirListingDownloader = new WebDirectoryListingDownloader(serverToDownload);
-
-                if (serverToDownload.SimulateOnly)
-                {
-                    Console.Write("Simulating ");
-                }
-
-                Console.WriteLine("Downloading files from: " + serverToDownload.ServerUri.ToString());
-                List<string> downloadList = dirListingDownloader.DownloadAll();
-
-                //Enable to output all files downloaded to console:
-                //downloadList.ForEach(d => Console.WriteLine(d));
-
-                if (Directory.Exists(Path.GetDirectoryName(serverToDownload.DownloadListOutputPath)))
-                {
-                    File.WriteAllLines(serverToDownload.DownloadListOutputPath, downloadList.ToArray());
-                }
-
-                // Space out the output between servers we are downloading from
-                Console.WriteLine();
-                Console.WriteLine();
+            foreach (var serverToDownload in directoryServersToDownload)
+            {
+                var webDirectoryListingDownloader = new WebDirectoryListingDownloader(serverToDownload);
+                DownloadFromServer(globalIgnoreTokens, defaultDirectoryRegEx, serverToDownload, webDirectoryListingDownloader);
             }
+
+            foreach (var siteToDownload in paginatedListingSitesToDownload)
+            {
+                var webPaginatedListingDownloader = new WebPaginatedListingDownloader(siteToDownload);
+                DownloadFromServer(globalIgnoreTokens, defaultDirectoryRegEx, siteToDownload, webPaginatedListingDownloader);
+            }
+        }
+
+        private static void DownloadFromServer(List<Token> globalIgnoreTokens, Token defaultDirectoryRegEx, ServerDownloadInformation serverToDownload, WebDownloader webDownloader)
+        {
+            // Add global ignores to the server information
+            if (serverToDownload.IgnoreTokens == null)
+            {
+                serverToDownload.IgnoreTokens = new List<Token>();
+            }
+            serverToDownload.IgnoreTokens.AddRange(globalIgnoreTokens);
+
+            // An empty list will still be honored and not overwritten otherwise use the default directory finding regex
+            if (serverToDownload.DirectoryTokens == null)
+            {
+                serverToDownload.DirectoryTokens = new List<Token>() { defaultDirectoryRegEx };
+            }
+
+            if (serverToDownload.SimulateOnly)
+            {
+                Console.Write("Simulating ");
+            }
+
+            Console.WriteLine("Downloading files from: " + serverToDownload.ServerUri.ToString());
+            List<string> downloadList = webDownloader.DownloadAll();
+
+            //Enable to output all files downloaded to console:
+            //downloadList.ForEach(d => Console.WriteLine(d));
+
+            if (Directory.Exists(Path.GetDirectoryName(serverToDownload.DownloadListOutputPath)))
+            {
+                File.WriteAllLines(serverToDownload.DownloadListOutputPath, downloadList.ToArray());
+            }
+
+            // Space out the output between servers we are downloading from
+            Console.WriteLine();
+            Console.WriteLine();
         }
     }
 }
