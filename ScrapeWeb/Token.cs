@@ -78,7 +78,7 @@ namespace ScrapeWeb
         /// The others were thrown in for ease of use.
         /// </remarks>
         /// <returns>Whether or not the token matches against the given term</returns>
-        public bool MatchToken(string toMatch)
+        public bool Match(string toMatch)
         {
             bool matched;
 

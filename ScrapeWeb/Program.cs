@@ -50,14 +50,13 @@ namespace ScrapeWeb
                         new Token(TokenType.Equals, "Parent Directory", CompareLocation.InnerText),
                         new Token(TokenType.Equals, "addons", CompareLocation.InnerText)
                     },
-                    SimulateOnly = true,
-                    DownloadListOutputPath = @"c:\temp\wrathofk007.com simulation.txt"
+                    SimulateOnly = true
                 },
                 //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/198.144.183.130_27016/"), DownloadPath = @"C:\server download\198.144.183.130_27016\", SimulateOnly = true },
-                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\72.251.228.169_27016 simulation.txt" },
+                //new ServerDownloadInformation() { ServerUri = new Uri("http://89.40.216.145/72.251.228.169_27016/"), DownloadPath = @"C:\server download\72.251.228.169_27016\", SimulateOnly = true, DownloadListOutputPath = @"c:\temp\72.251.228.169_27016 downloads.txt" },
                 //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.33_27017/"), DownloadPath = @"C:\server download\186.233.187.33_27017\", SimulateOnly = true },
                 //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.187.19_27017/"), DownloadPath = @"C:\server download\186.233.187.19_27017\", SimulateOnly = true, },
-                //new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, }
+                new ServerDownloadInformation()  { ServerUri = new Uri("http://89.40.216.145/186.233.186.51_27017"), DownloadPath = @"C:\server download\186.233.186.51_27017\", SimulateOnly = true, }
             };
 
             foreach (var serverToDownload in serversToDownload)
@@ -75,7 +74,7 @@ namespace ScrapeWeb
                     serverToDownload.DirectoryTokens = new List<Token>() { defaultDirectoryRegEx };
                 }
 
-                WebDownloader webDownloader = new WebDownloader(serverToDownload);
+                WebDirectoryListingDownloader dirListingDownloader = new WebDirectoryListingDownloader(serverToDownload);
 
                 if (serverToDownload.SimulateOnly)
                 {
@@ -83,7 +82,7 @@ namespace ScrapeWeb
                 }
 
                 Console.WriteLine("Downloading files from: " + serverToDownload.ServerUri.ToString());
-                List<string> downloadList = webDownloader.DownloadAll();
+                List<string> downloadList = dirListingDownloader.DownloadAll();
 
                 //Enable to output all files downloaded to console:
                 //downloadList.ForEach(d => Console.WriteLine(d));
