@@ -62,22 +62,22 @@ namespace ScrapeWeb
 
             var paginatedListingSitesToDownload = new List<PaginatedListingSiteInformation>()
             {
-                new PaginatedListingSiteInformation()
-                {
-                    ServerUri = new Uri("https://en.ds-servers.com/maps/goldsrc/dod/"),
-                    DownloadPath = @"C:\server download\ds-servers\",
-                    IgnoreTokens = new List<Token>()
-                    {
-                        // URL does not contain /maps/goldsrc/dod/*.html
-                        new Token(TokenType.RegEx, @"(?<!\/maps\/goldsrc\/dod\/.*\.html)$")
-                    },
-                    SimulateOnly = false,
-                    DownloadListOutputPath = @"c:\temp\ds-servers downloads.txt",
-                    PageMask = @"https://en.ds-servers.com/maps/goldsrc/dod/{0}/",
-                    PageStart = 0,
-                    PageEnd = 13,
-                    DownloadLinkTransform = new TermReplacer(".html", ".zip")
-                },
+                //new PaginatedListingSiteInformation()
+                //{
+                //    ServerUri = new Uri("https://en.ds-servers.com/maps/goldsrc/dod/"),
+                //    DownloadPath = @"C:\server download\ds-servers\",
+                //    IgnoreTokens = new List<Token>()
+                //    {
+                //        // URL does not contain /maps/goldsrc/dod/*.html
+                //        new Token(TokenType.RegEx, @"(?<!\/maps\/goldsrc\/dod\/.*\.html)$")
+                //    },
+                //    SimulateOnly = false,
+                //    DownloadListOutputPath = @"c:\temp\ds-servers downloads.txt",
+                //    PageMask = @"https://en.ds-servers.com/maps/goldsrc/dod/{0}/",
+                //    PageStart = 0,
+                //    PageEnd = 12,
+                //    DownloadLinkTransform = new TermReplacer(".html", ".zip")
+                //}
             };
 
             foreach (var serverToDownload in directoryServersToDownload)
