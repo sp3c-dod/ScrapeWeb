@@ -105,6 +105,7 @@ namespace ScrapeWeb
 
                     if (!_serverDownloadInformation.SimulateOnly)
                     {
+                        Console.WriteLine("Downloading file: " + decodedFilename);
                         Client.DownloadFile(downloadLink, downloadFilePath);
                     }
 
