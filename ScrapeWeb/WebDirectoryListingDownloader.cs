@@ -49,6 +49,7 @@ namespace ScrapeWeb
             foreach (HtmlNode anchor in anchors)
             {
                 string anchorInnerText = anchor.InnerText;
+                string anchorInnerHtml = anchor.InnerHtml;
 
                 // If the anchor tag has no HREF attribute then skip that anchor tag
                 HtmlAttribute hrefAttribute = WebUtility.GetHrefAttribute(anchor.Attributes);
@@ -61,13 +62,13 @@ namespace ScrapeWeb
 
                 // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"
                 // as well as file types that you don't want to download (e.g. Thumbs.db, *.txt, etc...)
-                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, anchorInnerHtml, _serverDownloadInformation.IgnoreTokens))
                 {
                     continue;
                 }
                 
                 // Download files in this folder and recurse into sub-folders
-                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.DirectoryTokens))
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, anchorInnerHtml, _serverDownloadInformation.DirectoryTokens))
                 {
                     // Rescurse sub-folder
                     Uri subFolder = new Uri(url, anchorHref);

@@ -51,10 +51,21 @@ namespace ScrapeWeb
                 Directory.CreateDirectory(downloadPath);
             }
 
-            for (int pageNumber = _paginatedListingSiteInformation.PageStart; pageNumber <= _paginatedListingSiteInformation.PageEnd; pageNumber++)
+            int pageNumber = -1;
+            try
             {
-                Console.WriteLine("Downloading page {0}...", pageNumber);
-                DownloadFilesOnPage(String.Format(_paginatedListingSiteInformation.PageMask, pageNumber), downloadPath);
+                for (pageNumber = _paginatedListingSiteInformation.PageStart; pageNumber <= _paginatedListingSiteInformation.PageEnd; pageNumber++)
+                {
+                    Console.WriteLine("Downloading page {0}...", pageNumber);
+                    DownloadFilesOnPage(String.Format(_paginatedListingSiteInformation.PageMask, pageNumber), downloadPath);
+                }
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                if (pageNumber > 0)
+                {
+                    Console.WriteLine("Page " + pageNumber + " does not exit");
+                }
             }
         }
 
@@ -70,6 +81,7 @@ namespace ScrapeWeb
             foreach(var anchor in anchors)
             {
                 string anchorInnerText = anchor.InnerText;
+                string anchorInnerHtml = anchor.InnerHtml;
 
                 // If the anchor tag has no HREF attribute then skip that anchor tag
                 HtmlAttribute hrefAttribute = WebUtility.GetHrefAttribute(anchor.Attributes);
@@ -82,7 +94,7 @@ namespace ScrapeWeb
 
                 // Skip any links in the IgnoreTokens collection. This usually includes things such "./" and "../"
                 // as well as file types that you don't want to download (e.g. Thumbs.db, *.txt, etc...)
-                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, _serverDownloadInformation.IgnoreTokens))
+                if (CompareAllTokens(decodedAnchorHref, anchorInnerText, anchorInnerHtml, _serverDownloadInformation.IgnoreTokens))
                 {
                     continue;
                 }
@@ -110,6 +122,7 @@ namespace ScrapeWeb
                     }
 
                     _downloadList.Add(downloadFilePath);
+                    //_downloadList.Add(decodedAnchorHref);
 
                 }
                 catch (Exception ex)

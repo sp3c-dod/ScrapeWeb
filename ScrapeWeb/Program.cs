@@ -77,7 +77,25 @@ namespace ScrapeWeb
                 //    PageStart = 0,
                 //    PageEnd = 12,
                 //    DownloadLinkTransform = new TermReplacer(".html", ".zip")
-                //}
+                //},
+                new PaginatedListingSiteInformation()
+                {
+                    ServerUri = new Uri("https://www.17buddies.rocks/17b2/View/Maps/Gam/1/Mod/2/Cat/0/All/0/Pag/1/index.html"),
+                    DownloadPath = @"C:\server download\17buddies\",
+                    IgnoreTokens = new List<Token>()
+                    {
+                        // URL does not contain /view/map/*.html
+                        new Token(TokenType.RegEx, @"(?<!\/[V|v]iew\/[M|m]ap\/.*\.html)$"),
+                        new Token(TokenType.StartsWith, "<img", CompareLocation.InnerHtml),
+                        new Token(TokenType.Equals, "Comment(s)", CompareLocation.InnerText)
+                    },
+                    SimulateOnly = true,
+                    DownloadListOutputPath = @"c:\temp\17buddies downloads.txt",
+                    PageMask = @"https://www.17buddies.rocks/17b2/View/Maps/Gam/1/Mod/2/Cat/0/All/0/Pag/{0}/index.html",
+                    PageStart = 1,
+                    PageEnd = 136, //55 is with paging of 50, 272 with paging of 10, 136 with 20
+                    DownloadLinkTransform = new TermReplacer(".html", ".zip")
+                }
             };
 
             foreach (var serverToDownload in directoryServersToDownload)

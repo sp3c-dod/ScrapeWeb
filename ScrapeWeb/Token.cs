@@ -20,6 +20,7 @@ namespace ScrapeWeb
     public enum CompareLocation
     {
         HrefAttribute,
+        InnerHtml,
         InnerText
     }
 

@@ -52,7 +52,7 @@ namespace ScrapeWeb
         /// <param name="toMatch">The term to match the token against</param>
         /// <param name="tokens">The tokens to run against the term</param>
         /// <returns>Whether or not any of the tokens match against the given term</returns>
-        protected bool CompareAllTokens(string anchorHref, string anchorInnerText, List<Token> tokens)
+        protected bool CompareAllTokens(string anchorHref, string anchorInnerText, string anchorInnerHtml, List<Token> tokens)
         {
             bool matchFound = false;
 
@@ -61,6 +61,10 @@ namespace ScrapeWeb
                 if (token.CompareLocation == CompareLocation.HrefAttribute)
                 {
                     matchFound = token.Match(anchorHref);
+                }
+                else if (token.CompareLocation == CompareLocation.InnerHtml)
+                {
+                    matchFound = token.Match(anchorInnerHtml);
                 }
                 else if (token.CompareLocation == CompareLocation.InnerText)
                 {
